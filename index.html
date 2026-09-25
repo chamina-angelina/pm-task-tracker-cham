@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Проверка подключения — PM Task Tracker</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 640px; margin: 60px auto; padding: 0 20px; color: #222; }
+  h1 { font-size: 20px; }
+  #status { font-size: 18px; padding: 16px; border-radius: 8px; margin-top: 24px; }
+  .pending { background: #eee; }
+  .ok { background: #e6f7e9; color: #1a7f37; }
+  .fail { background: #fde8e8; color: #c0392b; }
+  code { background: #f4f4f4; padding: 2px 6px; border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<h1>Проверка подключения к Firebase</h1>
+<p>Эта страница пытается записать и прочитать одну тестовую запись в вашей базе Firestore.</p>
+<div id="status" class="pending">Проверяю подключение…</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+  import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+  import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+  // ЗАМЕНИТЕ на свой firebaseConfig из консоли Firebase (тот же, что вы мне прислали)
+  const firebaseConfig = {
+    apiKey: "AIzaSyC0ySXqzPscg1Cw8DDmy5rcva6Vk70pwL0",
+    authDomain: "tasktracker-5c537.firebaseapp.com",
+    projectId: "tasktracker-5c537",
+    storageBucket: "tasktracker-5c537.firebasestorage.app",
+    messagingSenderId: "358295352507",
+    appId: "1:358295352507:web:91d8ebcdd71b57f80de59e"
+  };
+
+  const statusEl = document.getElementById("status");
+
+  try {
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // 1. Анонимный вход
+    const cred = await signInAnonymously(auth);
+    console.log("Signed in as", cred.user.uid);
+
+    // 2. Пишем тестовую запись
+    const testRef = doc(db, "connectivity_test", "ping");
+    await setDoc(testRef, {
+      message: "Привет от трекера!",
+      timestamp: new Date().toISOString(),
+      by: cred.user.uid
+    });
+
+    // 3. Читаем её обратно
+    const snap = await getDoc(testRef);
+
+    if (snap.exists()) {
+      statusEl.className = "ok";
+      statusEl.innerHTML =
+        "✅ Подключение работает.<br>" +
+        "Прочитано из базы: <code>" + snap.data().message + "</code><br>" +
+        "Время записи: " + snap.data().timestamp;
+    } else {
+      throw new Error("Запись не найдена после записи — странно, но не страшно, разберёмся.");
+    }
+  } catch (err) {
+    statusEl.className = "fail";
+    statusEl.innerHTML = "❌ Ошибка подключения:<br><code>" + err.message + "</code>";
+    console.error(err);
+  }
+</script>
+
+</body>
+</html>
