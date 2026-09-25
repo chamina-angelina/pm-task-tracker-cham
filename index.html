@@ -1,495 +1,1022 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Task Tracker Informtekhnika ChaminaA</title>
-<style>
-  * { box-sizing: border-box; }
-  body { font-family: system-ui, -apple-system, sans-serif; background: #f5f6f8; color: #1a1a1a; margin: 0; padding: 20px; }
-  .wrap { max-width: 900px; margin: 0 auto; }
-  h1 { font-size: 22px; margin-bottom: 4px; color: #0b1f4d; }
-  .sub { color: #666; font-size: 14px; margin-bottom: 20px; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Task Tracker Informtekhnika ChaminaA</title>
 
-  .whoami { background: #fff; border-radius: 10px; padding: 14px 16px; margin-bottom: 20px; display: flex; gap: 10px; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
-  .whoami input { flex: 1; padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
-  .whoami span { font-size: 13px; color: #666; white-space: nowrap; }
+  <style>
+    * { box-sizing: border-box; }
 
-  .card { background: #fff; border-radius: 10px; padding: 18px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
-  .card h2 { font-size: 15px; margin: 0 0 12px; display:flex; justify-content:space-between; align-items:center; }
-  .form-row { display: grid; grid-template-columns: 1.2fr 1.6fr 1fr 1fr auto; gap: 8px; }
-  .form-row input { padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; width: 100%; }
-  .form-row button, .btn { padding: 8px 14px; border: none; border-radius: 6px; background: #2563eb; color: #fff; font-size: 14px; cursor: pointer; }
-  .form-row button:hover, .btn:hover { background: #1d4ed8; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #f5f6f8;
+      color: #1a1a1a;
+      margin: 0;
+      padding: 20px;
+    }
 
-  .import-row { display: grid; grid-template-columns: 1fr 1.4fr auto; gap: 8px; align-items: center; }
-  .import-row input[type=text] { padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
-  .import-row input[type=file] { font-size: 13px; }
-  .import-hint { font-size: 12px; color: #888; margin-top: 8px; }
+    .wrap {
+      max-width: 900px;
+      margin: 0 auto;
+    }
 
-  .header-actions { display: flex; gap: 8px; }
+    h1 {
+      font-size: 22px;
+      margin-bottom: 4px;
+      color: #0b1f4d;
+    }
 
-  .ticket { border: 1px solid #eee; border-radius: 8px; padding: 14px 16px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
-  .ticket .meta { flex: 1; min-width: 220px; }
-  .ticket .proj { font-size: 12px; color: #2563eb; font-weight: 600; text-transform: uppercase; letter-spacing: .03em; }
-  .ticket .task { font-size: 15px; font-weight: 600; margin: 2px 0; }
-  .ticket .dates { font-size: 12px; color: #888; }
-  .ticket .who { font-size: 12px; color: #555; margin-top: 4px; }
-  .ticket .comment { font-size: 12px; color: #b45309; margin-top: 4px; background: #fff7ed; padding: 4px 8px; border-radius: 6px; display: inline-block; }
+    .sub {
+      color: #666;
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
 
-  .status { font-size: 11px; padding: 3px 9px; border-radius: 999px; font-weight: 600; white-space: nowrap; }
-  .status.not_started { background: #eee; color: #666; }
-  .status.in_progress { background: #fff4d6; color: #92650b; }
-  .status.done { background: #e6f7e9; color: #1a7f37; }
+    .whoami {
+      background: #fff;
+      border-radius: 10px;
+      padding: 14px 16px;
+      margin-bottom: 20px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,.06);
+    }
 
-  .btn.secondary { background: #eee; color: #333; }
-  .btn.secondary:hover { background: #ddd; }
-  .btn.danger { background: #fde8e8; color: #c0392b; }
-  .btn.danger:hover { background: #fbd5d5; }
-  .btn.small { padding: 6px 12px; font-size: 13px; }
+    .whoami input {
+      flex: 1;
+      padding: 8px 10px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+    }
 
-  .empty { color: #999; font-size: 14px; text-align: center; padding: 30px 0; }
-  #conn { font-size: 12px; margin-bottom: 14px; }
-  #conn.ok { color: #1a7f37; }
-  #conn.fail { color: #c0392b; }
-  #importStatus { font-size: 13px; margin-top: 8px; }
-</style>
+    .whoami span {
+      font-size: 13px;
+      color: #666;
+      white-space: nowrap;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 18px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,.06);
+    }
+
+    .card h2 {
+      font-size: 15px;
+      margin: 0 0 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1.2fr 1.6fr 1fr 1fr auto;
+      gap: 8px;
+    }
+
+    .form-row input {
+      padding: 8px 10px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+      width: 100%;
+    }
+
+    .form-row button,
+    .btn {
+      padding: 8px 14px;
+      border: none;
+      border-radius: 6px;
+      background: #2563eb;
+      color: #fff;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .form-row button:hover,
+    .btn:hover {
+      background: #1d4ed8;
+    }
+
+    .import-row {
+      display: grid;
+      grid-template-columns: 1fr 1.4fr auto;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .import-row input[type="text"] {
+      padding: 8px 10px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    .import-row input[type="file"] {
+      font-size: 13px;
+    }
+
+    .import-hint {
+      font-size: 12px;
+      color: #888;
+      margin-top: 8px;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .ticket {
+      border: 1px solid #eee;
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .ticket .meta {
+      flex: 1;
+      min-width: 220px;
+    }
+
+    .ticket .proj {
+      font-size: 12px;
+      color: #2563eb;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .03em;
+    }
+
+    .ticket .task {
+      font-size: 15px;
+      font-weight: 600;
+      margin: 2px 0;
+    }
+
+    .ticket .dates {
+      font-size: 12px;
+      color: #888;
+    }
+
+    .ticket .who {
+      font-size: 12px;
+      color: #555;
+      margin-top: 4px;
+    }
+
+    .ticket .comment {
+      font-size: 12px;
+      color: #b45309;
+      margin-top: 4px;
+      background: #fff7ed;
+      padding: 4px 8px;
+      border-radius: 6px;
+      display: inline-block;
+    }
+
+    .status {
+      font-size: 11px;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .status.notstarted {
+      background: #eee;
+      color: #666;
+    }
+
+    .status.inprogress {
+      background: #fff4d6;
+      color: #92650b;
+    }
+
+    .status.done {
+      background: #e6f7e9;
+      color: #1a7f37;
+    }
+
+    .btn.secondary {
+      background: #eee;
+      color: #333;
+    }
+
+    .btn.secondary:hover {
+      background: #ddd;
+    }
+
+    .btn.danger {
+      background: #fde8e8;
+      color: #c0392b;
+    }
+
+    .btn.danger:hover {
+      background: #fbd5d5;
+    }
+
+    .btn.small {
+      padding: 6px 12px;
+      font-size: 13px;
+    }
+
+    .empty {
+      color: #999;
+      font-size: 14px;
+      text-align: center;
+      padding: 30px 0;
+    }
+
+    #conn {
+      font-size: 12px;
+      margin-bottom: 14px;
+    }
+
+    #conn.ok {
+      color: #1a7f37;
+    }
+
+    #conn.fail {
+      color: #c0392b;
+    }
+
+    #importStatus {
+      font-size: 13px;
+      margin-top: 8px;
+    }
+
+    @media (max-width: 720px) {
+      .form-row,
+      .import-row {
+        grid-template-columns: 1fr;
+      }
+
+      .header-actions {
+        flex-wrap: wrap;
+      }
+    }
+  </style>
 </head>
+
 <body>
-<div class="wrap">
+  <div class="wrap">
+    <h1>Task Tracker Informtekhnika ChaminaA</h1>
+    <div class="sub">Прототип для отслеживания задач и трудозатрат по проектам портфеля</div>
 
-  <h1>Task Tracker Informtekhnika ChaminaA</h1>
-  <div class="sub">Прототип для отслеживания задач и трудозатрат по проектам портфеля</div>
-  <div id="conn">Подключение…</div>
+    <div id="conn">Подключение…</div>
 
-  <div class="whoami">
-    <span>Вы работаете как:</span>
-    <input id="userName" placeholder="Введите ваше имя (например, Иванов И.И.)">
-    <span id="userSaved" style="color:#1a7f37;"></span>
-  </div>
-
-  <div class="card">
-    <h2>Импорт из MS Project</h2>
-    <div class="import-row">
-      <input type="text" id="importProject" placeholder="Название проекта для этого файла">
-      <input type="file" id="importFile" accept=".xlsx,.xls" multiple>
-      <button class="btn" id="importBtn">Импортировать</button>
+    <div class="whoami">
+      <span>Вы работаете как:</span>
+      <input id="userName" placeholder="Фамилия И.О.">
+      <span id="userSaved" style="color:#1a7f37"></span>
     </div>
-    <div class="import-hint">Можно выбрать сразу несколько файлов — все листы каждого файла будут обработаны. Ищутся столбцы «Название», «Начало», «Окончание», «Базовое начало», «Базовое окончание».</div>
-    <div id="importStatus"></div>
-  </div>
 
-  <div class="card">
-    <h2>Добавить тикет вручную</h2>
-    <div class="form-row">
-      <input id="fProject" placeholder="Проект">
-      <input id="fTask" placeholder="Задача">
-      <input id="fStart" type="date">
-      <input id="fEnd" type="date">
-      <button id="addBtn">Добавить</button>
-    </div>
-  </div>
+    <div class="card">
+      <h2>Импорт из MS Project</h2>
 
-  <div class="card">
-    <h2>
-      <span>Тикеты</span>
-      <div class="header-actions">
-        <select id="resourceFilter" style="padding:6px 10px; border:1px solid #ddd; border-radius:6px; font-size:13px;">
-          <option value="">Все ресурсы</option>
-        </select>
-        <button class="btn small secondary" id="exportBtn">Скачать Excel</button>
-        <button class="btn small danger" id="clearBtn">Очистить все тикеты</button>
+      <div class="import-row">
+        <input type="text" id="importProject" placeholder="Название проекта">
+        <input type="file" id="importFile" accept=".xlsx,.xls" multiple>
+        <button class="btn" id="importBtn">Импортировать</button>
       </div>
-    </h2>
-    <div id="list"><div class="empty">Загрузка…</div></div>
+
+      <div class="import-hint">
+        Можно выбрать сразу несколько файлов — все листы каждого файла будут обработаны.
+        Ищутся столбцы «Название», «Начало», «Окончание», «Базовое начало»,
+        «Базовое окончание», «Фактическое начало», «Фактическое окончание», «Названия ресурсов».
+      </div>
+
+      <div id="importStatus"></div>
+    </div>
+
+    <div class="card">
+      <h2>Добавить тикет вручную</h2>
+
+      <div class="form-row">
+        <input id="fProject" placeholder="Проект">
+        <input id="fTask" placeholder="Задача">
+        <input id="fStart" type="date">
+        <input id="fEnd" type="date">
+        <button id="addBtn">Добавить</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>
+        <span>Тикеты</span>
+
+        <div class="header-actions">
+          <select id="resourceFilter" style="padding:6px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px">
+            <option value="">Все ресурсы</option>
+          </select>
+
+          <button class="btn small secondary" id="exportBtn">Скачать Excel</button>
+          <button class="btn small danger" id="clearBtn">Очистить все тикеты</button>
+        </div>
+      </h2>
+
+      <div id="list">
+        <div class="empty">Загрузка…</div>
+      </div>
+    </div>
   </div>
 
-</div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-  import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-  import {
-    getFirestore, collection, addDoc, onSnapshot,
-    doc, updateDoc, deleteDoc, serverTimestamp, query, orderBy
-  } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyC0ySXqzPscg1Cw8DDmy5rcva6Vk70pwL0",
-    authDomain: "tasktracker-5c537.firebaseapp.com",
-    projectId: "tasktracker-5c537",
-    storageBucket: "tasktracker-5c537.firebasestorage.app",
-    messagingSenderId: "358295352507",
-    appId: "1:358295352507:web:91d8ebcdd71b57f80de59e"
-  };
+    import {
+      getAuth,
+      signInAnonymously
+    } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
-  const conn = document.getElementById("conn");
+    import {
+      getFirestore,
+      collection,
+      addDoc,
+      onSnapshot,
+      doc,
+      updateDoc,
+      deleteDoc,
+      serverTimestamp,
+      query,
+      orderBy
+    } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
-  // --- Имя пользователя ---
-  const userNameInput = document.getElementById("userName");
-  const userSaved = document.getElementById("userSaved");
-  userNameInput.value = localStorage.getItem("pmt_userName") || "";
-  userNameInput.addEventListener("input", () => {
-    localStorage.setItem("pmt_userName", userNameInput.value.trim());
-    userSaved.textContent = userNameInput.value.trim() ? "сохранено" : "";
-    setTimeout(() => userSaved.textContent = "", 1200);
-  });
-  function currentUser() {
-    const v = userNameInput.value.trim();
-    if (!v) { alert("Сначала введите своё имя вверху страницы."); return null; }
-    return v;
-  }
+    const firebaseConfig = {
+      apiKey: "AIzaSyC0ySXqzPscg1Cw8DDmy5rcva6Vk70pwL0",
+      authDomain: "tasktracker-5c537.firebaseapp.com",
+      projectId: "tasktracker-5c537",
+      storageBucket: "tasktracker-5c537.firebasestorage.app",
+      messagingSenderId: "358295352507",
+      appId: "1:358295352507:web:91d8ebcdd71b57f80de59e"
+    };
 
-  // --- Даты: разбор и форматирование ДД.ММ.ГГГГ <-> ISO ---
-  function formatRuDate(iso) {
-    if (!iso) return null;
-    const [y, m, d] = iso.split("-");
-    return `${d}.${m}.${y}`;
-  }
-  function todayRu() {
-    const d = new Date();
-    return `${String(d.getDate()).padStart(2,"0")}.${String(d.getMonth()+1).padStart(2,"0")}.${d.getFullYear()}`;
-  }
-  function parseRuDate(str) {
-    if (!str) return null;
-    const m = str.trim().match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
-    if (!m) return null;
-    const [, dd, mm, yyyy] = m;
-    const d = parseInt(dd, 10), mo = parseInt(mm, 10);
-    if (d < 1 || d > 31 || mo < 1 || mo > 12) return null;
-    return `${yyyy}-${mm.padStart(2,"0")}-${dd.padStart(2,"0")}`;
-  }
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
 
-  // Запрашивает дату у пользователя; если есть база для сравнения (baselineISO) и дата отличается —
-  // требует комментарий по заданному шаблону. Возвращает {dateISO, comment} или null при отмене.
-  async function askDateWithBaselineCheck(promptLabel, baselineISO, baselineLabel) {
-    const input = prompt(`${promptLabel} (формат ДД.ММ.ГГГГ):`, todayRu());
-    if (input === null) return null;
-    const dateISO = parseRuDate(input);
-    if (!dateISO) { alert("Не удалось распознать дату — используйте формат ДД.ММ.ГГГГ."); return null; }
+    const conn = document.getElementById("conn");
+    const userNameInput = document.getElementById("userName");
+    const userSaved = document.getElementById("userSaved");
+    const list = document.getElementById("list");
 
-    let comment = null;
-    if (baselineISO && dateISO !== baselineISO) {
-      const baseRu = formatRuDate(baselineISO);
-      const reason = prompt(`${baselineLabel} задачи: ${baseRu}. Укажите, почему срок задачи изменен?`);
-      if (reason === null || !reason.trim()) {
-        alert("Причина обязательна при отклонении от базового срока. Действие отменено.");
+    let currentTickets = [];
+
+    userNameInput.value = localStorage.getItem("pmtUserName") || "";
+
+    userNameInput.addEventListener("input", () => {
+      localStorage.setItem("pmtUserName", userNameInput.value.trim());
+
+      userSaved.textContent = userNameInput.value.trim() ? "Сохранено" : "";
+
+      setTimeout(() => {
+        userSaved.textContent = "";
+      }, 1200);
+    });
+
+    function currentUser() {
+      const value = normalizeResourceName(userNameInput.value);
+
+      if (!value) {
+        alert("Укажите своё имя в формате «Фамилия И.О.»");
         return null;
       }
-      comment = reason.trim();
+
+      return value;
     }
-    return { dateISO, comment };
-  }
 
-  // --- Подключение ---
-  try {
-    await signInAnonymously(auth);
-    conn.textContent = "✅ Подключено к общей базе";
-    conn.className = "ok";
-  } catch (e) {
-    conn.textContent = "❌ Не удалось подключиться: " + e.message;
-    conn.className = "fail";
-  }
+    /*
+      Нормализует имя ресурса.
 
-  // --- Ручное добавление тикета ---
-  document.getElementById("addBtn").addEventListener("click", async () => {
-    const project = document.getElementById("fProject").value.trim();
-    const task = document.getElementById("fTask").value.trim();
-    const start = document.getElementById("fStart").value;
-    const end = document.getElementById("fEnd").value;
-    if (!project || !task) { alert("Заполните хотя бы проект и задачу."); return; }
+      Примеры:
+      Иванов И.И. [0,15] -> Иванов И.И.
+      Иванов И.И. [0,20] -> Иванов И.И.
+      Иванов И.И.        -> Иванов И.И.
+    */
+    function normalizeResourceName(value) {
+      if (!value) return null;
 
-    await addDoc(collection(db, "tickets"), {
-      project, task,
-      plannedStart: start || null,
-      plannedEnd: end || null,
-      baselineStart: start || null,
-      baselineEnd: end || null,
-      status: "not_started",
-      assignee: null,
-      actualHours: 0,
-      createdAt: serverTimestamp()
-    });
+      const normalized = String(value)
+        .replace(/\[[^\]]*\]/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
 
-    document.getElementById("fProject").value = "";
-    document.getElementById("fTask").value = "";
-    document.getElementById("fStart").value = "";
-    document.getElementById("fEnd").value = "";
-  });
-
-  // --- Импорт из MS Project (.xlsx) ---
-  function excelSerialToISO(v) {
-    if (v instanceof Date) return v.toISOString().split("T")[0];
-    if (typeof v === "number") {
-      const utcDays = Math.floor(v - 25569);
-      const d = new Date(utcDays * 86400 * 1000);
-      return d.toISOString().split("T")[0];
+      return normalized || null;
     }
-    if (typeof v === "string" && v.trim() && v.trim().toLowerCase() !== "нд") return v.trim();
-    return null;
-  }
-  function findCol(row, names) {
-    const keys = Object.keys(row);
-    for (const n of names) {
-      const hit = keys.find(k => k.trim().toLowerCase() === n.toLowerCase());
-      if (hit) return hit;
+
+    function resourceOf(ticket) {
+      return normalizeResourceName(
+        ticket.assignee || ticket.suggestedResource || null
+      );
     }
-    return null;
-  }
 
-  document.getElementById("importBtn").addEventListener("click", async () => {
-    const statusEl = document.getElementById("importStatus");
-    const projectName = document.getElementById("importProject").value.trim();
-    const fileInput = document.getElementById("importFile");
+    function formatRuDate(iso) {
+      if (!iso) return null;
 
-    if (!projectName) { statusEl.textContent = "Укажите название проекта."; statusEl.style.color = "#c0392b"; return; }
-    if (!fileInput.files.length) { statusEl.textContent = "Выберите один или несколько файлов."; statusEl.style.color = "#c0392b"; return; }
+      const [y, m, d] = iso.split("-");
+      return `${d}.${m}.${y}`;
+    }
 
-    statusEl.textContent = "Читаю файлы…";
-    statusEl.style.color = "#666";
+    function todayRu() {
+      const d = new Date();
 
-    let imported = 0;
-    let skippedSheets = [];
+      return String(d.getDate()).padStart(2, "0") + "." +
+        String(d.getMonth() + 1).padStart(2, "0") + "." +
+        d.getFullYear();
+    }
+
+    function parseRuDate(str) {
+      if (!str) return null;
+
+      const match = str.trim().match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+
+      if (!match) return null;
+
+      const [, dd, mm, yyyy] = match;
+
+      const day = parseInt(dd, 10);
+      const month = parseInt(mm, 10);
+
+      if (day < 1 || day > 31 || month < 1 || month > 12) {
+        return null;
+      }
+
+      return `${yyyy}-${mm.padStart(2, "0")}-${dd.padStart(2, "0")}`;
+    }
+
+    async function askDateWithBaselineCheck(promptLabel, baselineISO, baselineLabel) {
+      const input = prompt(`${promptLabel} в формате ДД.ММ.ГГГГ`, todayRu());
+
+      if (input === null) return null;
+
+      const dateISO = parseRuDate(input);
+
+      if (!dateISO) {
+        alert("Введите дату в формате ДД.ММ.ГГГГ");
+        return null;
+      }
+
+      let comment = null;
+
+      if (baselineISO && dateISO > baselineISO) {
+        const baselineRu = formatRuDate(baselineISO);
+
+        const reason = prompt(
+          `${baselineLabel}: ${baselineRu}. Укажите причину отклонения:`
+        );
+
+        if (reason === null || !reason.trim()) {
+          alert("Нужно указать причину отклонения от базового плана.");
+          return null;
+        }
+
+        comment = reason.trim();
+      }
+
+      return {
+        dateISO,
+        comment
+      };
+    }
 
     try {
-      for (const file of fileInput.files) {
-        const buf = await file.arrayBuffer();
-        const wb = XLSX.read(buf, { type: "array", cellDates: true });
+      await signInAnonymously(auth);
 
-        for (const sheetName of wb.SheetNames) {
-          const sheet = wb.Sheets[sheetName];
-          const rows = XLSX.utils.sheet_to_json(sheet, { defval: null });
-          if (!rows.length) continue;
+      conn.textContent = "Подключено к Firebase";
+      conn.className = "ok";
+    } catch (error) {
+      conn.textContent = "Ошибка подключения: " + error.message;
+      conn.className = "fail";
+    }
 
-          const nameCol = findCol(rows[0], ["Название"]);
-          if (!nameCol) { skippedSheets.push(`${file.name} → ${sheetName}`); continue; }
+    document.getElementById("addBtn").addEventListener("click", async () => {
+      const project = document.getElementById("fProject").value.trim();
+      const task = document.getElementById("fTask").value.trim();
+      const start = document.getElementById("fStart").value;
+      const end = document.getElementById("fEnd").value;
 
-          const startCol = findCol(rows[0], ["Начало"]);
-          const endCol = findCol(rows[0], ["Окончание"]);
-          const baseStartCol = findCol(rows[0], ["Базовое начало", "Базовое_начало"]);
-          const baseEndCol = findCol(rows[0], ["Базовое окончание", "Базовое_окончание"]);
-          const factStartCol = findCol(rows[0], ["Фактическое начало", "Фактическое_начало"]);
-          const factEndCol = findCol(rows[0], ["Фактическое окончание", "Фактическое_окончание"]);
-          const resCol = findCol(rows[0], ["Названия ресурсов", "Названия_ресурсов"]);
+      if (!project || !task) {
+        alert("Заполните проект и название задачи.");
+        return;
+      }
 
-          for (const row of rows) {
-            const taskName = row[nameCol];
-            if (!taskName || !String(taskName).trim()) continue;
+      await addDoc(collection(db, "tickets"), {
+        project,
+        task,
+        plannedStart: start || null,
+        plannedEnd: end || null,
+        baselineStart: start || null,
+        baselineEnd: end || null,
+        status: "notstarted",
+        assignee: null,
+        suggestedResource: null,
+        actualHours: 0,
+        createdAt: serverTimestamp()
+      });
 
-            const plannedStart = startCol ? excelSerialToISO(row[startCol]) : null;
-            const plannedEnd = endCol ? excelSerialToISO(row[endCol]) : null;
-            const baselineStart = baseStartCol ? excelSerialToISO(row[baseStartCol]) : plannedStart;
-            const baselineEnd = baseEndCol ? excelSerialToISO(row[baseEndCol]) : plannedEnd;
-            const factStart = factStartCol ? excelSerialToISO(row[factStartCol]) : null;
-            const factEnd = factEndCol ? excelSerialToISO(row[factEndCol]) : null;
-            const resource = resCol ? (row[resCol] || null) : null;
+      document.getElementById("fProject").value = "";
+      document.getElementById("fTask").value = "";
+      document.getElementById("fStart").value = "";
+      document.getElementById("fEnd").value = "";
+    });
 
-            // Статус выводится из фактических дат: если проставлено фактическое окончание — задача завершена;
-            // если проставлено только фактическое начало — задача в работе; иначе — не начата.
-            let status = "not_started", actualStartDate = null, actualEndDate = null, assignee = null;
-            if (factEnd) {
-              status = "done";
-              actualStartDate = factStart || null;
-              actualEndDate = factEnd;
-              assignee = resource;
-            } else if (factStart) {
-              status = "in_progress";
-              actualStartDate = factStart;
-              assignee = resource;
+    function excelSerialToISO(value) {
+      if (value instanceof Date) {
+        return value.toISOString().split("T")[0];
+      }
+
+      if (typeof value === "number") {
+        const utcDays = Math.floor(value - 25569);
+        const date = new Date(utcDays * 86400 * 1000);
+
+        return date.toISOString().split("T")[0];
+      }
+
+      if (typeof value === "string" && value.trim()) {
+        return value.trim();
+      }
+
+      return null;
+    }
+
+    function findCol(row, names) {
+      const keys = Object.keys(row);
+
+      for (const name of names) {
+        const hit = keys.find(key =>
+          key.trim().toLowerCase() === name.toLowerCase()
+        );
+
+        if (hit) return hit;
+      }
+
+      return null;
+    }
+
+    document.getElementById("importBtn").addEventListener("click", async () => {
+      const statusEl = document.getElementById("importStatus");
+      const projectName = document.getElementById("importProject").value.trim();
+      const fileInput = document.getElementById("importFile");
+
+      if (!projectName) {
+        statusEl.textContent = "Укажите название проекта.";
+        statusEl.style.color = "#c0392b";
+        return;
+      }
+
+      if (!fileInput.files.length) {
+        statusEl.textContent = "Выберите хотя бы один файл.";
+        statusEl.style.color = "#c0392b";
+        return;
+      }
+
+      statusEl.textContent = "Импорт выполняется…";
+      statusEl.style.color = "#666";
+
+      let imported = 0;
+      const skippedSheets = [];
+
+      try {
+        for (const file of fileInput.files) {
+          const buf = await file.arrayBuffer();
+
+          const wb = XLSX.read(buf, {
+            type: "array",
+            cellDates: true
+          });
+
+          for (const sheetName of wb.SheetNames) {
+            const sheet = wb.Sheets[sheetName];
+
+            const rows = XLSX.utils.sheet_to_json(sheet, {
+              defval: null
+            });
+
+            if (!rows.length) continue;
+
+            const nameCol = findCol(rows[0], [
+              "Название",
+              "Название задачи",
+              "Name",
+              "Task Name"
+            ]);
+
+            if (!nameCol) {
+              skippedSheets.push(`${file.name} — ${sheetName}`);
+              continue;
             }
 
-            await addDoc(collection(db, "tickets"), {
-              project: projectName,
-              task: String(taskName).trim(),
-              plannedStart, plannedEnd,
-              baselineStart, baselineEnd,
-              status,
-              assignee,
-              actualStartDate,
-              actualEndDate,
-              suggestedResource: resource,
-              sourceSheet: sheetName,
-              actualHours: 0,
-              createdAt: serverTimestamp()
-            });
-            imported++;
+            const startCol = findCol(rows[0], [
+              "Начало",
+              "Start"
+            ]);
+
+            const endCol = findCol(rows[0], [
+              "Окончание",
+              "Finish"
+            ]);
+
+            const baseStartCol = findCol(rows[0], [
+              "Базовое начало",
+              "Baseline Start"
+            ]);
+
+            const baseEndCol = findCol(rows[0], [
+              "Базовое окончание",
+              "Baseline Finish"
+            ]);
+
+            const factStartCol = findCol(rows[0], [
+              "Фактическое начало",
+              "Actual Start"
+            ]);
+
+            const factEndCol = findCol(rows[0], [
+              "Фактическое окончание",
+              "Actual Finish"
+            ]);
+
+            const resCol = findCol(rows[0], [
+              "Названия ресурсов",
+              "Ресурсы",
+              "Resource Names",
+              "Resource"
+            ]);
+
+            for (const row of rows) {
+              const taskName = row[nameCol];
+
+              if (!taskName || !String(taskName).trim()) continue;
+
+              const plannedStart = startCol
+                ? excelSerialToISO(row[startCol])
+                : null;
+
+              const plannedEnd = endCol
+                ? excelSerialToISO(row[endCol])
+                : null;
+
+              const baselineStart = baseStartCol
+                ? excelSerialToISO(row[baseStartCol])
+                : plannedStart;
+
+              const baselineEnd = baseEndCol
+                ? excelSerialToISO(row[baseEndCol])
+                : plannedEnd;
+
+              const factStart = factStartCol
+                ? excelSerialToISO(row[factStartCol])
+                : null;
+
+              const factEnd = factEndCol
+                ? excelSerialToISO(row[factEndCol])
+                : null;
+
+              const resourceRaw = resCol ? row[resCol] : null;
+              const resource = normalizeResourceName(resourceRaw);
+
+              let status = "notstarted";
+              let actualStartDate = null;
+              let actualEndDate = null;
+              let assignee = null;
+
+              if (factEnd) {
+                status = "done";
+                actualStartDate = factStart || null;
+                actualEndDate = factEnd;
+                assignee = resource;
+              } else if (factStart) {
+                status = "inprogress";
+                actualStartDate = factStart;
+                assignee = resource;
+              }
+
+              await addDoc(collection(db, "tickets"), {
+                project: projectName,
+                task: String(taskName).trim(),
+                plannedStart,
+                plannedEnd,
+                baselineStart,
+                baselineEnd,
+                status,
+                assignee,
+                actualStartDate,
+                actualEndDate,
+                suggestedResource: resource,
+                sourceSheet: sheetName,
+                actualHours: 0,
+                createdAt: serverTimestamp()
+              });
+
+              imported++;
+            }
           }
         }
+
+        let message = `Импортировано тикетов: ${imported}.`;
+
+        if (skippedSheets.length) {
+          message += ` Пропущены листы без столбца «Название»: ${skippedSheets.join(", ")}.`;
+        }
+
+        statusEl.textContent = message;
+        statusEl.style.color = imported ? "#1a7f37" : "#c0392b";
+
+        fileInput.value = "";
+      } catch (error) {
+        console.error(error);
+
+        statusEl.textContent = "Ошибка импорта: " + error.message;
+        statusEl.style.color = "#c0392b";
       }
-
-      let msg = `Готово — импортировано тикетов: ${imported}.`;
-      if (skippedSheets.length) msg += ` Пропущены листы без столбца «Название»: ${skippedSheets.join(", ")}.`;
-      statusEl.textContent = msg;
-      statusEl.style.color = imported ? "#1a7f37" : "#c0392b";
-      fileInput.value = "";
-    } catch (err) {
-      console.error(err);
-      statusEl.textContent = "Ошибка при чтении файлов: " + err.message;
-      statusEl.style.color = "#c0392b";
-    }
-  });
-
-  // --- Очистка всех тикетов ---
-  document.getElementById("clearBtn").addEventListener("click", async () => {
-    if (!currentTickets.length) { alert("Тикетов и так нет."); return; }
-    if (!confirm(`Удалить все тикеты (${currentTickets.length} шт.)? Это необратимо.`)) return;
-    for (const t of currentTickets) {
-      await deleteDoc(doc(db, "tickets", t.id));
-    }
-    alert("Все тикеты удалены.");
-  });
-
-  // --- Список тикетов (реалтайм) + хранение для экспорта ---
-  const list = document.getElementById("list");
-  const statusLabel = { not_started: "Не начата", in_progress: "В работе", done: "Завершена" };
-  let currentTickets = [];
-
-  const q = query(collection(db, "tickets"), orderBy("createdAt", "desc"));
-  onSnapshot(q, (snap) => {
-    currentTickets = [];
-    snap.forEach((docSnap) => currentTickets.push({ id: docSnap.id, ...docSnap.data() }));
-    updateResourceFilterOptions();
-    renderList();
-  });
-
-  function resourceOf(t) {
-    return t.assignee || t.suggestedResource || null;
-  }
-
-  function updateResourceFilterOptions() {
-    const select = document.getElementById("resourceFilter");
-    const prevValue = select.value;
-    const names = Array.from(new Set(currentTickets.map(resourceOf).filter(Boolean))).sort((a, b) => a.localeCompare(b, "ru"));
-
-    select.innerHTML = '<option value="">Все ресурсы</option>' + names.map(n => `<option value="${n}">${n}</option>`).join("");
-    if (names.includes(prevValue)) select.value = prevValue;
-  }
-
-  document.getElementById("resourceFilter").addEventListener("change", renderList);
-
-  function renderList() {
-    const filterValue = document.getElementById("resourceFilter").value;
-    const ticketsToShow = filterValue ? currentTickets.filter(t => resourceOf(t) === filterValue) : currentTickets;
-
-    if (!ticketsToShow.length) {
-      list.innerHTML = `<div class="empty">${currentTickets.length ? "Нет тикетов по выбранному ресурсу." : "Пока нет тикетов — добавьте вручную или импортируйте выше."}</div>`;
-      return;
-    }
-
-    list.innerHTML = "";
-    ticketsToShow.forEach((t) => {
-      const id = t.id;
-      const el = document.createElement("div");
-      el.className = "ticket";
-      const dates = [t.plannedStart, t.plannedEnd].filter(Boolean).join(" → ");
-
-      let actionsHtml = "";
-      if (t.status === "not_started") {
-        actionsHtml = `<button class="btn small" data-action="start" data-id="${id}">Начать работу</button>`;
-      } else if (t.status === "in_progress") {
-        actionsHtml = `<button class="btn small" data-action="finish" data-id="${id}">Завершить</button>`;
-      } else {
-        actionsHtml = `<span style="font-size:13px;color:#1a7f37;">Готово · ${t.actualHours || 0} ч</span>`;
-      }
-      actionsHtml += ` <button class="btn small secondary" data-action="delete" data-id="${id}">✕</button>`;
-
-      const comments = [];
-      if (t.startDateComment) comments.push(`Смещение начала: ${t.startDateComment}`);
-      if (t.endDateComment) comments.push(`Смещение окончания: ${t.endDateComment}`);
-
-      el.innerHTML = `
-        <div class="meta">
-          <div class="proj">${t.project}</div>
-          <div class="task">${t.task}</div>
-          <div class="dates">${dates || "Даты не указаны"}</div>
-          <div class="who">${t.assignee ? "Исполнитель: " + t.assignee : (t.suggestedResource ? "Ресурс из ПГ: " + t.suggestedResource : "")}</div>
-          ${comments.map(c => `<div class="comment">${c}</div>`).join("")}
-        </div>
-        <div style="display:flex; align-items:center; gap:10px;">
-          <span class="status ${t.status}">${statusLabel[t.status]}</span>
-          ${actionsHtml}
-        </div>
-      `;
-      list.appendChild(el);
     });
-  }
 
-  // --- Кнопки тикетов ---
-  list.addEventListener("click", async (e) => {
-    const btn = e.target.closest("button[data-action]");
-    if (!btn) return;
-    const id = btn.dataset.id;
-    const action = btn.dataset.action;
-    const ref = doc(db, "tickets", id);
-    const ticket = currentTickets.find(t => t.id === id);
+    document.getElementById("clearBtn").addEventListener("click", async () => {
+      if (!currentTickets.length) {
+        alert("Нет тикетов для удаления.");
+        return;
+      }
 
-    if (action === "start") {
-      const user = currentUser();
-      if (!user) return;
+      if (!confirm(`Удалить все тикеты (${currentTickets.length} шт.)?`)) {
+        return;
+      }
 
-      const result = await askDateWithBaselineCheck("Дата начала работы", ticket?.baselineStart, "Базовое начало");
-      if (!result) return;
+      for (const ticket of currentTickets) {
+        await deleteDoc(doc(db, "tickets", ticket.id));
+      }
 
-      await updateDoc(ref, {
-        status: "in_progress",
-        assignee: user,
-        startedAt: serverTimestamp(),
-        actualStartDate: result.dateISO,
-        startDateComment: result.comment || null
+      alert("Все тикеты удалены.");
+    });
+
+    const statusLabel = {
+      notstarted: "Не начато",
+      inprogress: "В работе",
+      done: "Завершено"
+    };
+
+    const ticketsQuery = query(
+      collection(db, "tickets"),
+      orderBy("createdAt", "desc")
+    );
+
+    onSnapshot(ticketsQuery, snapshot => {
+      currentTickets = [];
+
+      snapshot.forEach(docSnap => {
+        currentTickets.push({
+          id: docSnap.id,
+          ...docSnap.data()
+        });
+      });
+
+      updateResourceFilterOptions();
+      renderList();
+    });
+
+    function updateResourceFilterOptions() {
+      const select = document.getElementById("resourceFilter");
+      const previousValue = select.value;
+
+      const names = Array.from(
+        new Set(
+          currentTickets
+            .map(resourceOf)
+            .filter(Boolean)
+        )
+      ).sort((a, b) => a.localeCompare(b, "ru"));
+
+      select.innerHTML =
+        '<option value="">Все ресурсы</option>' +
+        names
+          .map(name => `<option value="${name}">${name}</option>`)
+          .join("");
+
+      if (names.includes(previousValue)) {
+        select.value = previousValue;
+      }
+    }
+
+    document.getElementById("resourceFilter").addEventListener("change", renderList);
+
+    function renderList() {
+      const filterValue = document.getElementById("resourceFilter").value;
+
+      const ticketsToShow = filterValue
+        ? currentTickets.filter(ticket => resourceOf(ticket) === filterValue)
+        : currentTickets;
+
+      if (!ticketsToShow.length) {
+        list.innerHTML = `
+          <div class="empty">
+            ${currentTickets.length
+              ? "По выбранному ресурсу тикетов не найдено."
+              : "Тикетов пока нет."}
+          </div>
+        `;
+        return;
+      }
+
+      list.innerHTML = "";
+
+      ticketsToShow.forEach(ticket => {
+        const id = ticket.id;
+        const el = document.createElement("div");
+
+        el.className = "ticket";
+
+        const dates = [
+          ticket.plannedStart ? formatRuDate(ticket.plannedStart) : null,
+          ticket.plannedEnd ? formatRuDate(ticket.plannedEnd) : null
+        ].filter(Boolean).join(" — ");
+
+        let actionsHtml = "";
+
+        if (ticket.status === "notstarted") {
+          actionsHtml = `
+            <button class="btn small" data-action="start" data-id="${id}">
+              Начать
+            </button>
+          `;
+        } else if (ticket.status === "inprogress") {
+          actionsHtml = `
+            <button class="btn small" data-action="finish" data-id="${id}">
+              Завершить
+            </button>
+          `;
+        } else {
+          actionsHtml = `
+            <span style="font-size:13px;color:#1a7f37">
+              ${ticket.actualHours || 0} ч.
+            </span>
+          `;
+        }
+
+        actionsHtml += `
+          <button class="btn small secondary" data-action="delete" data-id="${id}">
+            Удалить
+          </button>
+        `;
+
+        const comments = [];
+
+        if (ticket.startDateComment) {
+          comments.push(ticket.startDateComment);
+        }
+
+        if (ticket.endDateComment) {
+          comments.push(ticket.endDateComment);
+        }
+
+        const resourceName = resourceOf(ticket);
+
+        el.innerHTML = `
+          <div class="meta">
+            <div class="proj">${ticket.project || ""}</div>
+            <div class="task">${ticket.task || ""}</div>
+            <div class="dates">${dates}</div>
+
+            ${
+              resourceName
+                ? `<div class="who">Ресурс: ${resourceName}</div>`
+                : ""
+            }
+
+            ${
+              comments
+                .map(comment => `<div class="comment">${comment}</div>`)
+                .join("")
+            }
+          </div>
+
+          <div style="display:flex;align-items:center;gap:10px">
+            <span class="status ${ticket.status}">
+              ${statusLabel[ticket.status] || ticket.status}
+            </span>
+
+            ${actionsHtml}
+          </div>
+        `;
+
+        list.appendChild(el);
       });
     }
 
-    if (action === "finish") {
-      const result = await askDateWithBaselineCheck("Дата завершения работы", ticket?.baselineEnd, "Базовое окончание");
-      if (!result) return;
+    list.addEventListener("click", async event => {
+      const btn = event.target.closest("button[data-action]");
 
-      const hoursStr = prompt("Сколько часов потрачено на эту задачу?");
-      if (hoursStr === null) return;
-      const hours = parseFloat(hoursStr.replace(",", "."));
-      if (isNaN(hours) || hours < 0) { alert("Введите корректное число часов."); return; }
+      if (!btn) return;
 
-      await updateDoc(ref, {
-        status: "done",
-        actualHours: hours,
-        finishedAt: serverTimestamp(),
-        actualEndDate: result.dateISO,
-        endDateComment: result.comment || null
-      });
-    }
+      const id = btn.dataset.id;
+      const action = btn.dataset.action;
+      const ref = doc(db, "tickets", id);
 
-    if (action === "delete") {
-      if (confirm("Удалить тикет?")) await deleteDoc(ref);
-    }
-  });
+      const ticket = currentTickets.find(item => item.id === id);
 
-  // --- Экспорт в Excel ---
-  document.getElementById("exportBtn").addEventListener("click", () => {
-    if (!currentTickets.length) { alert("Нет тикетов для экспорта."); return; }
+      if (!ticket) return;
 
-    const rows = currentTickets.map(t => ({
-      "Проект": t.project,
-      "Задача": t.task,
-      "Базовое начало": t.baselineStart || "",
-      "Базовое окончание": t.baselineEnd || "",
-      "Фактическая дата начала": t.actualStartDate || "",
-      "Фактическая дата окончания": t.actualEndDate || "",
-      "Статус": statusLabel[t.status] || t.status,
-      "Исполнитель": t.assignee || "",
-      "Фактические часы": t.actualHours || 0,
-      "Причина смещения начала": t.startDateComment || "",
-      "Причина смещения окончания": t.endDateComment || ""
-    }));
+      if (action === "start") {
+        const user = currentUser();
 
-    const ws = XLSX.utils.json_to_sheet(rows);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Тикеты");
-    const dateStr = new Date().toISOString().split("T")[0];
-    XLSX.writeFile(wb, `tracker_export_${dateStr}.xlsx`);
-  });
-</script>
+        if (!user) return;
+
+        const result = await askDateWithBaselineCheck(
+          "Введите фактическую дату начала",
+          ticket.baselineStart,
+          "Базовая дата начала"
+        );
+
+        if (!result) return;
+
+        await updateDoc(ref, {
+          status: "inprogress",
+          assignee: normalizeResourceName(user),
+          startedAt: serverTimestamp(),
+          actualStartDate: result.dateISO,
+          startDateComment: result.comment || null
+        });
+      }
+
+      if (action === "finish") {
+        const result = await askDateWithBaselineCheck(
+          "Введите фактическую дату окончания",
+          ticket.baselineEnd,
+          "Базовая дата окончания"
+        );
+
+        if (!result) return;
+
+        const hoursStr = prompt("Введите фактические трудозатраты в часах:");
+
+        if (hoursStr === null) return;
+
+        const hours = parseFloat(hoursStr.replace(",", "."));
+
+        if (Number.isNaN(hours) || hours < 0) {
+          alert("Введите корректное количество часов.");
+          return;
+        }
+
+        await updateDoc(ref, {
+          status: "done",
+          actualHours: hours,
+          finishedAt: serverTimestamp(),
+          actualEndDate: result.dateISO,
+          endDateComment: result.comment || null
+        });
+      }
+
+      if (action === "delete") {
+        if (confirm("Удалить тикет?")) {
+          await deleteDoc(ref);
+        }
+      }
+    });
+
+    document.getElementById("exportBtn").addEventListener("click", () => {
+      if (!currentTickets.length) {
+        alert("Нет тикетов для экспорта.");
+        return;
+      }
+
+      const rows = currentTickets.map(ticket => ({
+        "Проект": ticket.project || "",
+        "Задача": ticket.task || "",
+        "Плановое начало": ticket.plannedStart || "",
+        "Плановое окончание": ticket.plannedEnd || "",
+        "Базовое начало": ticket.baselineStart || "",
+        "Базовое окончание": ticket.baselineEnd || "",
+        "Фактическое начало": ticket.actualStartDate || "",
+        "Фактическое окончание": ticket.actualEndDate || "",
+        "Статус": statusLabel[ticket.status] || ticket.status || "",
+        "Ресурс": resourceOf(ticket) || "",
+        "Трудозатраты, ч.": ticket.actualHours || 0,
+        "Комментарий к началу": ticket.startDateComment || "",
+        "Комментарий к окончанию": ticket.endDateComment || ""
+      }));
+
+      const ws = XLSX.utils.json_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+
+      XLSX.utils.book_append_sheet(wb, ws, "Тикеты");
+
+      const dateStr = new Date().toISOString().split("T")[0];
+
+      XLSX.writeFile(wb, `tracker_export_${dateStr}.xlsx`);
+    });
+  </script>
 </body>
 </html>
