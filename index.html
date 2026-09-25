@@ -226,7 +226,7 @@
       const d = new Date(utcDays * 86400 * 1000);
       return d.toISOString().split("T")[0];
     }
-    if (typeof v === "string" && v.trim()) return v.trim();
+    if (typeof v === "string" && v.trim() && v.trim().toLowerCase() !== "нд") return v.trim();
     return null;
   }
   function findCol(row, names) {
@@ -269,6 +269,8 @@
           const endCol = findCol(rows[0], ["Окончание"]);
           const baseStartCol = findCol(rows[0], ["Базовое начало", "Базовое_начало"]);
           const baseEndCol = findCol(rows[0], ["Базовое окончание", "Базовое_окончание"]);
+          const factStartCol = findCol(rows[0], ["Фактическое начало", "Фактическое_начало"]);
+          const factEndCol = findCol(rows[0], ["Фактическое окончание", "Фактическое_окончание"]);
           const resCol = findCol(rows[0], ["Названия ресурсов", "Названия_ресурсов"]);
 
           for (const row of rows) {
@@ -279,15 +281,34 @@
             const plannedEnd = endCol ? excelSerialToISO(row[endCol]) : null;
             const baselineStart = baseStartCol ? excelSerialToISO(row[baseStartCol]) : plannedStart;
             const baselineEnd = baseEndCol ? excelSerialToISO(row[baseEndCol]) : plannedEnd;
+            const factStart = factStartCol ? excelSerialToISO(row[factStartCol]) : null;
+            const factEnd = factEndCol ? excelSerialToISO(row[factEndCol]) : null;
+            const resource = resCol ? (row[resCol] || null) : null;
+
+            // Статус выводится из фактических дат: если проставлено фактическое окончание — задача завершена;
+            // если проставлено только фактическое начало — задача в работе; иначе — не начата.
+            let status = "not_started", actualStartDate = null, actualEndDate = null, assignee = null;
+            if (factEnd) {
+              status = "done";
+              actualStartDate = factStart || null;
+              actualEndDate = factEnd;
+              assignee = resource;
+            } else if (factStart) {
+              status = "in_progress";
+              actualStartDate = factStart;
+              assignee = resource;
+            }
 
             await addDoc(collection(db, "tickets"), {
               project: projectName,
               task: String(taskName).trim(),
               plannedStart, plannedEnd,
               baselineStart, baselineEnd,
-              status: "not_started",
-              assignee: null,
-              suggestedResource: resCol ? (row[resCol] || null) : null,
+              status,
+              assignee,
+              actualStartDate,
+              actualEndDate,
+              suggestedResource: resource,
               sourceSheet: sheetName,
               actualHours: 0,
               createdAt: serverTimestamp()
