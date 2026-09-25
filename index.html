@@ -16,11 +16,16 @@
   .whoami span { font-size: 13px; color: #666; white-space: nowrap; }
 
   .card { background: #fff; border-radius: 10px; padding: 18px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
-  .card h2 { font-size: 15px; margin: 0 0 12px; }
+  .card h2 { font-size: 15px; margin: 0 0 12px; display:flex; justify-content:space-between; align-items:center; }
   .form-row { display: grid; grid-template-columns: 1.2fr 1.6fr 1fr 1fr auto; gap: 8px; }
   .form-row input { padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; width: 100%; }
   .form-row button, .btn { padding: 8px 14px; border: none; border-radius: 6px; background: #2563eb; color: #fff; font-size: 14px; cursor: pointer; }
   .form-row button:hover, .btn:hover { background: #1d4ed8; }
+
+  .import-row { display: grid; grid-template-columns: 1fr 1.4fr auto; gap: 8px; align-items: center; }
+  .import-row input[type=text] { padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
+  .import-row input[type=file] { font-size: 13px; }
+  .import-hint { font-size: 12px; color: #888; margin-top: 8px; }
 
   .ticket { border: 1px solid #eee; border-radius: 8px; padding: 14px 16px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
   .ticket .meta { flex: 1; min-width: 220px; }
@@ -36,13 +41,13 @@
 
   .btn.secondary { background: #eee; color: #333; }
   .btn.secondary:hover { background: #ddd; }
-  .btn.danger { background: #dc2626; }
-  .btn.danger:hover { background: #b91c1c; }
+  .btn.small { padding: 6px 12px; font-size: 13px; }
 
   .empty { color: #999; font-size: 14px; text-align: center; padding: 30px 0; }
   #conn { font-size: 12px; margin-bottom: 14px; }
   #conn.ok { color: #1a7f37; }
   #conn.fail { color: #c0392b; }
+  #importStatus { font-size: 13px; margin-top: 8px; }
 </style>
 </head>
 <body>
@@ -59,7 +64,18 @@
   </div>
 
   <div class="card">
-    <h2>Добавить тикет</h2>
+    <h2>Импорт из MS Project</h2>
+    <div class="import-row">
+      <input type="text" id="importProject" placeholder="Название проекта для этого файла">
+      <input type="file" id="importFile" accept=".xlsx,.xls">
+      <button class="btn" id="importBtn">Импортировать</button>
+    </div>
+    <div class="import-hint">Загрузите файл экспорта («Срез по текущим/завершённым задачам»). Ищутся столбцы «Название», «Начало», «Окончание».</div>
+    <div id="importStatus"></div>
+  </div>
+
+  <div class="card">
+    <h2>Добавить тикет вручную</h2>
     <div class="form-row">
       <input id="fProject" placeholder="Проект">
       <input id="fTask" placeholder="Задача">
@@ -70,12 +86,16 @@
   </div>
 
   <div class="card">
-    <h2>Тикеты</h2>
+    <h2>
+      <span>Тикеты</span>
+      <button class="btn small secondary" id="exportBtn">Скачать Excel</button>
+    </h2>
     <div id="list"><div class="empty">Загрузка…</div></div>
   </div>
 
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
   import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
@@ -98,7 +118,7 @@
   const db = getFirestore(app);
   const conn = document.getElementById("conn");
 
-  // --- Имя пользователя (просто хранится в этом браузере) ---
+  // --- Имя пользователя ---
   const userNameInput = document.getElementById("userName");
   const userSaved = document.getElementById("userSaved");
   userNameInput.value = localStorage.getItem("pmt_userName") || "";
@@ -107,7 +127,6 @@
     userSaved.textContent = userNameInput.value.trim() ? "сохранено" : "";
     setTimeout(() => userSaved.textContent = "", 1200);
   });
-
   function currentUser() {
     const v = userNameInput.value.trim();
     if (!v) { alert("Сначала введите своё имя вверху страницы."); return null; }
@@ -124,7 +143,7 @@
     conn.className = "fail";
   }
 
-  // --- Добавление тикета ---
+  // --- Ручное добавление тикета ---
   document.getElementById("addBtn").addEventListener("click", async () => {
     const project = document.getElementById("fProject").value.trim();
     const task = document.getElementById("fTask").value.trim();
@@ -148,40 +167,119 @@
     document.getElementById("fEnd").value = "";
   });
 
-  // --- Список тикетов (реалтайм) ---
+  // --- Импорт из MS Project (.xlsx) ---
+  function excelSerialToISO(v) {
+    if (v instanceof Date) return v.toISOString().split("T")[0];
+    if (typeof v === "number") {
+      const utcDays = Math.floor(v - 25569);
+      const d = new Date(utcDays * 86400 * 1000);
+      return d.toISOString().split("T")[0];
+    }
+    if (typeof v === "string" && v.trim()) return v.trim();
+    return null;
+  }
+
+  function findCol(row, names) {
+    const keys = Object.keys(row);
+    for (const n of names) {
+      const hit = keys.find(k => k.trim().toLowerCase() === n.toLowerCase());
+      if (hit) return hit;
+    }
+    return null;
+  }
+
+  document.getElementById("importBtn").addEventListener("click", async () => {
+    const statusEl = document.getElementById("importStatus");
+    const projectName = document.getElementById("importProject").value.trim();
+    const fileInput = document.getElementById("importFile");
+
+    if (!projectName) { statusEl.textContent = "Укажите название проекта."; statusEl.style.color = "#c0392b"; return; }
+    if (!fileInput.files.length) { statusEl.textContent = "Выберите файл."; statusEl.style.color = "#c0392b"; return; }
+
+    statusEl.textContent = "Читаю файл…";
+    statusEl.style.color = "#666";
+
+    try {
+      const file = fileInput.files[0];
+      const buf = await file.arrayBuffer();
+      const wb = XLSX.read(buf, { type: "array", cellDates: true });
+      const sheet = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(sheet, { defval: null });
+
+      if (!rows.length) { statusEl.textContent = "В файле нет строк с данными."; statusEl.style.color = "#c0392b"; return; }
+
+      const nameCol = findCol(rows[0], ["Название"]);
+      const startCol = findCol(rows[0], ["Начало"]);
+      const endCol = findCol(rows[0], ["Окончание"]);
+      const resCol = findCol(rows[0], ["Названия ресурсов", "Названия_ресурсов"]);
+
+      if (!nameCol) { statusEl.textContent = "Не найден столбец «Название» — проверьте файл."; statusEl.style.color = "#c0392b"; return; }
+
+      let imported = 0;
+      for (const row of rows) {
+        const taskName = row[nameCol];
+        if (!taskName || !String(taskName).trim()) continue;
+
+        await addDoc(collection(db, "tickets"), {
+          project: projectName,
+          task: String(taskName).trim(),
+          plannedStart: startCol ? excelSerialToISO(row[startCol]) : null,
+          plannedEnd: endCol ? excelSerialToISO(row[endCol]) : null,
+          status: "not_started",
+          assignee: null,
+          suggestedResource: resCol ? (row[resCol] || null) : null,
+          actualHours: 0,
+          createdAt: serverTimestamp()
+        });
+        imported++;
+      }
+
+      statusEl.textContent = `Готово — импортировано тикетов: ${imported}.`;
+      statusEl.style.color = "#1a7f37";
+      fileInput.value = "";
+    } catch (err) {
+      console.error(err);
+      statusEl.textContent = "Ошибка при чтении файла: " + err.message;
+      statusEl.style.color = "#c0392b";
+    }
+  });
+
+  // --- Список тикетов (реалтайм) + хранение для экспорта ---
   const list = document.getElementById("list");
   const statusLabel = { not_started: "Не начата", in_progress: "В работе", done: "Завершена" };
+  let currentTickets = [];
 
   const q = query(collection(db, "tickets"), orderBy("createdAt", "desc"));
   onSnapshot(q, (snap) => {
-    if (snap.empty) { list.innerHTML = '<div class="empty">Пока нет тикетов — добавьте первый выше.</div>'; return; }
+    currentTickets = [];
+    if (snap.empty) { list.innerHTML = '<div class="empty">Пока нет тикетов — добавьте вручную или импортируйте выше.</div>'; return; }
 
     list.innerHTML = "";
     snap.forEach((docSnap) => {
       const t = docSnap.data();
       const id = docSnap.id;
+      currentTickets.push({ id, ...t });
 
       const el = document.createElement("div");
       el.className = "ticket";
-
       const dates = [t.plannedStart, t.plannedEnd].filter(Boolean).join(" → ");
 
       let actionsHtml = "";
       if (t.status === "not_started") {
-        actionsHtml = `<button class="btn" data-action="start" data-id="${id}">Начать работу</button>`;
+        actionsHtml = `<button class="btn small" data-action="start" data-id="${id}">Начать работу</button>`;
       } else if (t.status === "in_progress") {
-        actionsHtml = `<button class="btn" data-action="finish" data-id="${id}">Завершить</button>`;
+        actionsHtml = `<button class="btn small" data-action="finish" data-id="${id}">Завершить</button>`;
       } else {
         actionsHtml = `<span style="font-size:13px;color:#1a7f37;">Готово · ${t.actualHours || 0} ч</span>`;
       }
-      actionsHtml += ` <button class="btn secondary" data-action="delete" data-id="${id}">✕</button>`;
+      actionsHtml += ` <button class="btn small secondary" data-action="delete" data-id="${id}">✕</button>`;
 
       el.innerHTML = `
         <div class="meta">
           <div class="proj">${t.project}</div>
           <div class="task">${t.task}</div>
           <div class="dates">${dates || "Даты не указаны"}</div>
-          <div class="who">${t.assignee ? "Исполнитель: " + t.assignee : ""}</div>
+          <div class="who">${t.assignee ? "Исполнитель: " + t.assignee : (t.suggestedResource ? "Ресурс из ПГ: " + t.suggestedResource : "")}</div>
         </div>
         <div style="display:flex; align-items:center; gap:10px;">
           <span class="status ${t.status}">${statusLabel[t.status]}</span>
@@ -192,7 +290,7 @@
     });
   });
 
-  // --- Обработка кнопок (делегирование событий) ---
+  // --- Кнопки тикетов ---
   list.addEventListener("click", async (e) => {
     const btn = e.target.closest("button[data-action]");
     if (!btn) return;
@@ -205,7 +303,6 @@
       if (!user) return;
       await updateDoc(ref, { status: "in_progress", assignee: user, startedAt: serverTimestamp() });
     }
-
     if (action === "finish") {
       const hoursStr = prompt("Сколько часов потрачено на эту задачу?");
       if (hoursStr === null) return;
@@ -213,10 +310,30 @@
       if (isNaN(hours) || hours < 0) { alert("Введите корректное число часов."); return; }
       await updateDoc(ref, { status: "done", actualHours: hours, finishedAt: serverTimestamp() });
     }
-
     if (action === "delete") {
       if (confirm("Удалить тикет?")) await deleteDoc(ref);
     }
+  });
+
+  // --- Экспорт в Excel ---
+  document.getElementById("exportBtn").addEventListener("click", () => {
+    if (!currentTickets.length) { alert("Нет тикетов для экспорта."); return; }
+
+    const rows = currentTickets.map(t => ({
+      "Проект": t.project,
+      "Задача": t.task,
+      "Начало": t.plannedStart || "",
+      "Окончание": t.plannedEnd || "",
+      "Статус": statusLabel[t.status] || t.status,
+      "Исполнитель": t.assignee || "",
+      "Фактические часы": t.actualHours || 0
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Тикеты");
+    const dateStr = new Date().toISOString().split("T")[0];
+    XLSX.writeFile(wb, `tracker_export_${dateStr}.xlsx`);
   });
 </script>
 </body>
