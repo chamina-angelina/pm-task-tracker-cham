@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>PM Task Tracker</title>
+<title>Task Tracker Informtekhnika ChaminaA</title>
 <style>
   * { box-sizing: border-box; }
   body { font-family: system-ui, -apple-system, sans-serif; background: #f5f6f8; color: #1a1a1a; margin: 0; padding: 20px; }
   .wrap { max-width: 900px; margin: 0 auto; }
-  h1 { font-size: 22px; margin-bottom: 4px; }
+  h1 { font-size: 22px; margin-bottom: 4px; color: #0b1f4d; }
   .sub { color: #666; font-size: 14px; margin-bottom: 20px; }
 
   .whoami { background: #fff; border-radius: 10px; padding: 14px 16px; margin-bottom: 20px; display: flex; gap: 10px; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
@@ -58,7 +58,7 @@
 <body>
 <div class="wrap">
 
-  <h1>ГК ИНФОРМТЕХНИКА ЧаминаАА</h1>
+  <h1>Task Tracker Informtekhnika ChaminaA</h1>
   <div class="sub">Прототип для отслеживания задач и трудозатрат по проектам портфеля</div>
   <div id="conn">Подключение…</div>
 
@@ -94,6 +94,9 @@
     <h2>
       <span>Тикеты</span>
       <div class="header-actions">
+        <select id="resourceFilter" style="padding:6px 10px; border:1px solid #ddd; border-radius:6px; font-size:13px;">
+          <option value="">Все ресурсы</option>
+        </select>
         <button class="btn small secondary" id="exportBtn">Скачать Excel</button>
         <button class="btn small danger" id="clearBtn">Очистить все тикеты</button>
       </div>
@@ -348,14 +351,38 @@
   const q = query(collection(db, "tickets"), orderBy("createdAt", "desc"));
   onSnapshot(q, (snap) => {
     currentTickets = [];
-    if (snap.empty) { list.innerHTML = '<div class="empty">Пока нет тикетов — добавьте вручную или импортируйте выше.</div>'; return; }
+    snap.forEach((docSnap) => currentTickets.push({ id: docSnap.id, ...docSnap.data() }));
+    updateResourceFilterOptions();
+    renderList();
+  });
+
+  function resourceOf(t) {
+    return t.assignee || t.suggestedResource || null;
+  }
+
+  function updateResourceFilterOptions() {
+    const select = document.getElementById("resourceFilter");
+    const prevValue = select.value;
+    const names = Array.from(new Set(currentTickets.map(resourceOf).filter(Boolean))).sort((a, b) => a.localeCompare(b, "ru"));
+
+    select.innerHTML = '<option value="">Все ресурсы</option>' + names.map(n => `<option value="${n}">${n}</option>`).join("");
+    if (names.includes(prevValue)) select.value = prevValue;
+  }
+
+  document.getElementById("resourceFilter").addEventListener("change", renderList);
+
+  function renderList() {
+    const filterValue = document.getElementById("resourceFilter").value;
+    const ticketsToShow = filterValue ? currentTickets.filter(t => resourceOf(t) === filterValue) : currentTickets;
+
+    if (!ticketsToShow.length) {
+      list.innerHTML = `<div class="empty">${currentTickets.length ? "Нет тикетов по выбранному ресурсу." : "Пока нет тикетов — добавьте вручную или импортируйте выше."}</div>`;
+      return;
+    }
 
     list.innerHTML = "";
-    snap.forEach((docSnap) => {
-      const t = docSnap.data();
-      const id = docSnap.id;
-      currentTickets.push({ id, ...t });
-
+    ticketsToShow.forEach((t) => {
+      const id = t.id;
       const el = document.createElement("div");
       el.className = "ticket";
       const dates = [t.plannedStart, t.plannedEnd].filter(Boolean).join(" → ");
@@ -389,7 +416,7 @@
       `;
       list.appendChild(el);
     });
-  });
+  }
 
   // --- Кнопки тикетов ---
   list.addEventListener("click", async (e) => {
