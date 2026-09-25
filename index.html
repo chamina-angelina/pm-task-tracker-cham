@@ -67,10 +67,10 @@
     <h2>Импорт из MS Project</h2>
     <div class="import-row">
       <input type="text" id="importProject" placeholder="Название проекта для этого файла">
-      <input type="file" id="importFile" accept=".xlsx,.xls">
+      <input type="file" id="importFile" accept=".xlsx,.xls" multiple>
       <button class="btn" id="importBtn">Импортировать</button>
     </div>
-    <div class="import-hint">Загрузите файл экспорта («Срез по текущим/завершённым задачам»). Ищутся столбцы «Название», «Начало», «Окончание».</div>
+    <div class="import-hint">Можно выбрать сразу несколько файлов (например, «Текущие» и «Завершённые» отдельными файлами) — все листы каждого файла будут обработаны. Ищутся столбцы «Название», «Начало», «Окончание».</div>
     <div id="importStatus"></div>
   </div>
 
@@ -194,52 +194,61 @@
     const fileInput = document.getElementById("importFile");
 
     if (!projectName) { statusEl.textContent = "Укажите название проекта."; statusEl.style.color = "#c0392b"; return; }
-    if (!fileInput.files.length) { statusEl.textContent = "Выберите файл."; statusEl.style.color = "#c0392b"; return; }
+    if (!fileInput.files.length) { statusEl.textContent = "Выберите один или несколько файлов."; statusEl.style.color = "#c0392b"; return; }
 
-    statusEl.textContent = "Читаю файл…";
+    statusEl.textContent = "Читаю файлы…";
     statusEl.style.color = "#666";
 
+    let imported = 0;
+    let skippedSheets = [];
+
     try {
-      const file = fileInput.files[0];
-      const buf = await file.arrayBuffer();
-      const wb = XLSX.read(buf, { type: "array", cellDates: true });
-      const sheet = wb.Sheets[wb.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(sheet, { defval: null });
+      for (const file of fileInput.files) {
+        const buf = await file.arrayBuffer();
+        const wb = XLSX.read(buf, { type: "array", cellDates: true });
 
-      if (!rows.length) { statusEl.textContent = "В файле нет строк с данными."; statusEl.style.color = "#c0392b"; return; }
+        for (const sheetName of wb.SheetNames) {
+          const sheet = wb.Sheets[sheetName];
+          const rows = XLSX.utils.sheet_to_json(sheet, { defval: null });
+          if (!rows.length) continue;
 
-      const nameCol = findCol(rows[0], ["Название"]);
-      const startCol = findCol(rows[0], ["Начало"]);
-      const endCol = findCol(rows[0], ["Окончание"]);
-      const resCol = findCol(rows[0], ["Названия ресурсов", "Названия_ресурсов"]);
+          const nameCol = findCol(rows[0], ["Название"]);
+          if (!nameCol) { skippedSheets.push(`${file.name} → ${sheetName}`); continue; }
 
-      if (!nameCol) { statusEl.textContent = "Не найден столбец «Название» — проверьте файл."; statusEl.style.color = "#c0392b"; return; }
+          const startCol = findCol(rows[0], ["Начало"]);
+          const endCol = findCol(rows[0], ["Окончание"]);
+          const resCol = findCol(rows[0], ["Названия ресурсов", "Названия_ресурсов"]);
+          const isCompletedSheet = /заверш/i.test(sheetName);
 
-      let imported = 0;
-      for (const row of rows) {
-        const taskName = row[nameCol];
-        if (!taskName || !String(taskName).trim()) continue;
+          for (const row of rows) {
+            const taskName = row[nameCol];
+            if (!taskName || !String(taskName).trim()) continue;
 
-        await addDoc(collection(db, "tickets"), {
-          project: projectName,
-          task: String(taskName).trim(),
-          plannedStart: startCol ? excelSerialToISO(row[startCol]) : null,
-          plannedEnd: endCol ? excelSerialToISO(row[endCol]) : null,
-          status: "not_started",
-          assignee: null,
-          suggestedResource: resCol ? (row[resCol] || null) : null,
-          actualHours: 0,
-          createdAt: serverTimestamp()
-        });
-        imported++;
+            await addDoc(collection(db, "tickets"), {
+              project: projectName,
+              task: String(taskName).trim(),
+              plannedStart: startCol ? excelSerialToISO(row[startCol]) : null,
+              plannedEnd: endCol ? excelSerialToISO(row[endCol]) : null,
+              status: "not_started",
+              assignee: null,
+              suggestedResource: resCol ? (row[resCol] || null) : null,
+              sourceSheet: sheetName,
+              actualHours: 0,
+              createdAt: serverTimestamp()
+            });
+            imported++;
+          }
+        }
       }
 
-      statusEl.textContent = `Готово — импортировано тикетов: ${imported}.`;
-      statusEl.style.color = "#1a7f37";
+      let msg = `Готово — импортировано тикетов: ${imported}.`;
+      if (skippedSheets.length) msg += ` Пропущены листы без столбца «Название»: ${skippedSheets.join(", ")}.`;
+      statusEl.textContent = msg;
+      statusEl.style.color = imported ? "#1a7f37" : "#c0392b";
       fileInput.value = "";
     } catch (err) {
       console.error(err);
-      statusEl.textContent = "Ошибка при чтении файла: " + err.message;
+      statusEl.textContent = "Ошибка при чтении файлов: " + err.message;
       statusEl.style.color = "#c0392b";
     }
   });
