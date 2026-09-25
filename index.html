@@ -1,4 +1,201 @@
-if (!btn) return;
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PM Task Tracker</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: system-ui, -apple-system, sans-serif; background: #f5f6f8; color: #1a1a1a; margin: 0; padding: 20px; }
+  .wrap { max-width: 900px; margin: 0 auto; }
+  h1 { font-size: 22px; margin-bottom: 4px; }
+  .sub { color: #666; font-size: 14px; margin-bottom: 20px; }
+
+  .whoami { background: #fff; border-radius: 10px; padding: 14px 16px; margin-bottom: 20px; display: flex; gap: 10px; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+  .whoami input { flex: 1; padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
+  .whoami span { font-size: 13px; color: #666; white-space: nowrap; }
+
+  .card { background: #fff; border-radius: 10px; padding: 18px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+  .card h2 { font-size: 15px; margin: 0 0 12px; }
+  .form-row { display: grid; grid-template-columns: 1.2fr 1.6fr 1fr 1fr auto; gap: 8px; }
+  .form-row input { padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; width: 100%; }
+  .form-row button, .btn { padding: 8px 14px; border: none; border-radius: 6px; background: #2563eb; color: #fff; font-size: 14px; cursor: pointer; }
+  .form-row button:hover, .btn:hover { background: #1d4ed8; }
+
+  .ticket { border: 1px solid #eee; border-radius: 8px; padding: 14px 16px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .ticket .meta { flex: 1; min-width: 220px; }
+  .ticket .proj { font-size: 12px; color: #2563eb; font-weight: 600; text-transform: uppercase; letter-spacing: .03em; }
+  .ticket .task { font-size: 15px; font-weight: 600; margin: 2px 0; }
+  .ticket .dates { font-size: 12px; color: #888; }
+  .ticket .who { font-size: 12px; color: #555; margin-top: 4px; }
+
+  .status { font-size: 11px; padding: 3px 9px; border-radius: 999px; font-weight: 600; white-space: nowrap; }
+  .status.not_started { background: #eee; color: #666; }
+  .status.in_progress { background: #fff4d6; color: #92650b; }
+  .status.done { background: #e6f7e9; color: #1a7f37; }
+
+  .btn.secondary { background: #eee; color: #333; }
+  .btn.secondary:hover { background: #ddd; }
+  .btn.danger { background: #dc2626; }
+  .btn.danger:hover { background: #b91c1c; }
+
+  .empty { color: #999; font-size: 14px; text-align: center; padding: 30px 0; }
+  #conn { font-size: 12px; margin-bottom: 14px; }
+  #conn.ok { color: #1a7f37; }
+  #conn.fail { color: #c0392b; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>PM Task Tracker</h1>
+  <div class="sub">Прототип для отслеживания задач и трудозатрат по проектам портфеля</div>
+  <div id="conn">Подключение…</div>
+
+  <div class="whoami">
+    <span>Вы работаете как:</span>
+    <input id="userName" placeholder="Введите ваше имя (например, Иванов И.И.)">
+    <span id="userSaved" style="color:#1a7f37;"></span>
+  </div>
+
+  <div class="card">
+    <h2>Добавить тикет</h2>
+    <div class="form-row">
+      <input id="fProject" placeholder="Проект">
+      <input id="fTask" placeholder="Задача">
+      <input id="fStart" type="date">
+      <input id="fEnd" type="date">
+      <button id="addBtn">Добавить</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Тикеты</h2>
+    <div id="list"><div class="empty">Загрузка…</div></div>
+  </div>
+
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+  import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+  import {
+    getFirestore, collection, addDoc, onSnapshot,
+    doc, updateDoc, deleteDoc, serverTimestamp, query, orderBy
+  } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyC0ySXqzPscg1Cw8DDmy5rcva6Vk70pwL0",
+    authDomain: "tasktracker-5c537.firebaseapp.com",
+    projectId: "tasktracker-5c537",
+    storageBucket: "tasktracker-5c537.firebasestorage.app",
+    messagingSenderId: "358295352507",
+    appId: "1:358295352507:web:91d8ebcdd71b57f80de59e"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const conn = document.getElementById("conn");
+
+  // --- Имя пользователя (просто хранится в этом браузере) ---
+  const userNameInput = document.getElementById("userName");
+  const userSaved = document.getElementById("userSaved");
+  userNameInput.value = localStorage.getItem("pmt_userName") || "";
+  userNameInput.addEventListener("input", () => {
+    localStorage.setItem("pmt_userName", userNameInput.value.trim());
+    userSaved.textContent = userNameInput.value.trim() ? "сохранено" : "";
+    setTimeout(() => userSaved.textContent = "", 1200);
+  });
+
+  function currentUser() {
+    const v = userNameInput.value.trim();
+    if (!v) { alert("Сначала введите своё имя вверху страницы."); return null; }
+    return v;
+  }
+
+  // --- Подключение ---
+  try {
+    await signInAnonymously(auth);
+    conn.textContent = "✅ Подключено к общей базе";
+    conn.className = "ok";
+  } catch (e) {
+    conn.textContent = "❌ Не удалось подключиться: " + e.message;
+    conn.className = "fail";
+  }
+
+  // --- Добавление тикета ---
+  document.getElementById("addBtn").addEventListener("click", async () => {
+    const project = document.getElementById("fProject").value.trim();
+    const task = document.getElementById("fTask").value.trim();
+    const start = document.getElementById("fStart").value;
+    const end = document.getElementById("fEnd").value;
+    if (!project || !task) { alert("Заполните хотя бы проект и задачу."); return; }
+
+    await addDoc(collection(db, "tickets"), {
+      project, task,
+      plannedStart: start || null,
+      plannedEnd: end || null,
+      status: "not_started",
+      assignee: null,
+      actualHours: 0,
+      createdAt: serverTimestamp()
+    });
+
+    document.getElementById("fProject").value = "";
+    document.getElementById("fTask").value = "";
+    document.getElementById("fStart").value = "";
+    document.getElementById("fEnd").value = "";
+  });
+
+  // --- Список тикетов (реалтайм) ---
+  const list = document.getElementById("list");
+  const statusLabel = { not_started: "Не начата", in_progress: "В работе", done: "Завершена" };
+
+  const q = query(collection(db, "tickets"), orderBy("createdAt", "desc"));
+  onSnapshot(q, (snap) => {
+    if (snap.empty) { list.innerHTML = '<div class="empty">Пока нет тикетов — добавьте первый выше.</div>'; return; }
+
+    list.innerHTML = "";
+    snap.forEach((docSnap) => {
+      const t = docSnap.data();
+      const id = docSnap.id;
+
+      const el = document.createElement("div");
+      el.className = "ticket";
+
+      const dates = [t.plannedStart, t.plannedEnd].filter(Boolean).join(" → ");
+
+      let actionsHtml = "";
+      if (t.status === "not_started") {
+        actionsHtml = `<button class="btn" data-action="start" data-id="${id}">Начать работу</button>`;
+      } else if (t.status === "in_progress") {
+        actionsHtml = `<button class="btn" data-action="finish" data-id="${id}">Завершить</button>`;
+      } else {
+        actionsHtml = `<span style="font-size:13px;color:#1a7f37;">Готово · ${t.actualHours || 0} ч</span>`;
+      }
+      actionsHtml += ` <button class="btn secondary" data-action="delete" data-id="${id}">✕</button>`;
+
+      el.innerHTML = `
+        <div class="meta">
+          <div class="proj">${t.project}</div>
+          <div class="task">${t.task}</div>
+          <div class="dates">${dates || "Даты не указаны"}</div>
+          <div class="who">${t.assignee ? "Исполнитель: " + t.assignee : ""}</div>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span class="status ${t.status}">${statusLabel[t.status]}</span>
+          ${actionsHtml}
+        </div>
+      `;
+      list.appendChild(el);
+    });
+  });
+
+  // --- Обработка кнопок (делегирование событий) ---
+  list.addEventListener("click", async (e) => {
+    const btn = e.target.closest("button[data-action]");
+    if (!btn) return;
     const id = btn.dataset.id;
     const action = btn.dataset.action;
     const ref = doc(db, "tickets", id);
